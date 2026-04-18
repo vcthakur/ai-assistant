@@ -46,6 +46,8 @@ def generate_sql_with_retry(question, schema_text, url, headers, spark, retries=
 
 def hybrid_assistant(user_input, schema_text, url, headers, spark):
 
+    print("✅ Running from feature branch")
+
     chat_history.append({"role": "user", "content": user_input})
 
     sql_query, result = generate_sql_with_retry(

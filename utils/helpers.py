@@ -1,3 +1,5 @@
+#helpers.py
+
 def clean_sql(query):
     query = query.strip()
 

@@ -1,3 +1,5 @@
+#assistant.py
+
 from core.sql_generator import generate_sql
 from core.executor import run_sql
 from core.llm import ask_llm

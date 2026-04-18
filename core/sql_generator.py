@@ -1,3 +1,5 @@
+#sql_generator.py
+
 from core.llm import ask_llm
 from utils.helpers import clean_sql
 

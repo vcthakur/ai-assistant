@@ -1,7 +1,9 @@
 from core.llm import ask_llm
 import json
+import re
 
 memory = {}
+last_entity = {}
 
 def extract_memory(user_input, url, headers):
  
@@ -72,6 +74,32 @@ def get_memory_filters():
         conditions.append(f"c.department = '{memory['department']}'")
 
     return " AND ".join(conditions)
+
+
+def update_entity_memory(result_df):
+    global last_entity
+
+    if result_df is None:
+        return
+
+    if len(result_df) == 0:
+        return
+
+    row = result_df.iloc[0]
+
+    # store only useful fields
+    if "firstName" in row and "lastName" in row:
+        last_entity = {
+            "firstName": row["firstName"],
+            "lastName": row["lastName"]
+        }
+
+def get_entity_filter():
+
+    if "firstName" in last_entity and "lastName" in last_entity:
+        return f"u.firstName = '{last_entity['firstName']}' AND u.lastName = '{last_entity['lastName']}'"
+
+    return ""
 
 
 def reset_memory():

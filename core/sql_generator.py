@@ -4,6 +4,7 @@ from core.llm import ask_llm
 from utils.helpers import clean_sql
 from config.business_rules import get_business_rules
 from core.memory import update_memory, get_memory_filters
+from core.memory import get_entity_filter
 
 
 def generate_sql(question, schema_text, url, headers):
@@ -13,6 +14,7 @@ def generate_sql(question, schema_text, url, headers):
 
     # get memory filters
     memory_filter = get_memory_filters()
+    entity_filter = get_entity_filter()
 
     prompt = f"""
     You are a SQL expert.
@@ -23,12 +25,12 @@ def generate_sql(question, schema_text, url, headers):
     Memory Filters:
     {memory_filter}
 
-    IMPORTANT:
-    - If question refers to "this user", do NOT use memory filters
-    - Instead assume it refers to last result (if unclear, return best guess)
+    Entity Filter (IMPORTANT):
+    {entity_filter}
 
     Instructions:
-    - Apply filters only when relevant
+    - If question refers to "this user", use Entity Filter
+    - Otherwise use Memory Filters
     - Use JOINs when needed
     - Only return SQL
 

@@ -3,10 +3,10 @@
 from core.sql_generator import generate_sql
 from core.executor import run_sql
 from core.llm import ask_llm
+from core.memory import update_entity_memory, get_entity_filter
 
 # memory
 chat_history = []
-
 
 def generate_sql_with_retry(question, schema_text, url, headers, spark, retries=2):
 
@@ -14,25 +14,14 @@ def generate_sql_with_retry(question, schema_text, url, headers, spark, retries=
 
     for i in range(retries):
 
-        # include chat history
-        context = "\n".join([f"{c['role']}: {c['content']}" for c in chat_history])
+        sql_query = generate_sql(question, schema_text, url, headers)
 
-        enhanced_question = f"""
-        Conversation:
-        {context}
+        result_text, result_df = run_sql(sql_query, spark)
 
-        Current Question:
-        {question}
-        """
+        if "SQL Error" not in result_text:
+            return sql_query, result_text, result_df
 
-        sql_query = generate_sql(enhanced_question, schema_text, url, headers)
-
-        result = run_sql(sql_query, spark)
-
-        if "SQL Error" not in result:
-            return sql_query, result
-
-        error_msg = result
+        error_msg = result_text
 
         question = f"""
         Fix this SQL based on error:
@@ -41,7 +30,7 @@ def generate_sql_with_retry(question, schema_text, url, headers, spark, retries=
         Error: {error_msg}
         """
 
-    return sql_query, result
+    return sql_query, result_text, result_df
 
 
 def hybrid_assistant(user_input, schema_text, url, headers, spark):
@@ -50,12 +39,15 @@ def hybrid_assistant(user_input, schema_text, url, headers, spark):
 
     chat_history.append({"role": "user", "content": user_input})
 
-    sql_query, result = generate_sql_with_retry(
+    sql_query, result_text, result_df = generate_sql_with_retry(
         user_input, schema_text, url, headers, spark
     )
 
     print("\n🔍 SQL:\n", sql_query)
-    print("\n📊 Result:\n", result)
+    print("\n📊 Result:\n", result_text)
+    
+    # 🔥 NEW: store entity
+    update_entity_memory(result_df)
 
     final_prompt = f"""
     You are a data analyst.
@@ -67,7 +59,7 @@ def hybrid_assistant(user_input, schema_text, url, headers, spark):
     {user_input}
 
     SQL Result:
-    {result}
+    {result_text}
 
     Instructions:
     - Give clear answer

@@ -1,7 +1,7 @@
 #executor.py
 
 def is_safe_query(query):
-    forbidden = ["DELETE", "UPDATE", "INSERT", "DROP", "ALTER"]
+    forbidden = ["DELETE", "UPDATE", "INSERT", "DROP", "ALTER", "CREATE", "TRUNCATE", "REPLACE", "MERGE", "REMOVE"]
     return not any(word in query.upper() for word in forbidden)
 
 
